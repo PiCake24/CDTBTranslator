@@ -1,5 +1,7 @@
+import fnmatch
 import sys
 
+import cdtb
 from cdtb.hashes import (
     default_hashfile,
     default_hash_dir,
@@ -23,11 +25,15 @@ def download_hashes():
         update_default_hashfile(basename)
 
 
-def unpack_file(file_path, output_path):
-
+def unpack_file(file_path, output_path, pattern):
     hashfile = default_hashfile(file_path)
 
     wad = Wad(file_path, hashes=hashfile.load())
+
+    wad.files = [wf for wf in wad.files if any(wf.path is not None and fnmatch.fnmatchcase(wf.path, pattern) for p in pattern)]
+
+    for wf in wad.files:
+        print(wf.path)
 
     wad.guess_extensions()
     wad.extract(output_path, overwrite=True)
@@ -37,7 +43,7 @@ if __name__ == "__main__":
     if sys.argv[1] == "download_hashes":
         download_hashes()
     elif sys.argv[1] == "unpack_file":
-        if len(sys.argv) < 4:
+        if len(sys.argv) < 5:
             print("Usage: unpack_file <file_path> <output_path>")
             sys.exit(1)
-        unpack_file(sys.argv[2], sys.argv[3])
+        unpack_file(sys.argv[2], sys.argv[3], sys.argv[4])
